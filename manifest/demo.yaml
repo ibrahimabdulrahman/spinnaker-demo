@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spinnaker-demo-config
+  namespace: default
+data:
+  NEW_FEATURE: "true"
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spinnaker-demo
+  namespace: default
+  labels:
+     app: spinnaker-demo
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: spinnaker-demo
+  template:
+    metadata:
+      labels:
+        app: spinnaker-demo
+    spec:
+      containers:
+      - name: spinnaker-demo
+        image: msubram01/hello-world:v1
+        ports:
+        - containerPort: 80
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+        envFrom:
+        - configMapRef:
+            name: spinnaker-demo-config
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: spinnaker-demo
+  namespace: default
+spec:
+  selector:
+     app: spinnaker
+  type: NodePort
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+    nodePort: 30010
